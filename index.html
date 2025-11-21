@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Builder | Sqidgeon.uk</title>
+  <style>
+    :root{--bg:#fafafa;--text:#1a1a1a;--border:#e0e0e0;--accent:#b49fdd;--card:#fff;--hover:#f5f2ff}
+    [data-theme=dark]{--bg:#0d0d0d;--text:#f0f0f0;--border:#333;--accent:#c4a8ff;--card:#1a1a1a;--hover:#2a223d}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:var(--bg);color:var(--text);font-family:system-ui,sans-serif;transition:all .3s;line-height:1.6;overflow-x:hidden}
+    a{color:var(--accent);text-decoration:none}
+
+    /* YOUR ORIGINAL NAV — PERFECT CIRCLE HOVER */
+    .main-nav{position:fixed;top:20px;right:20px;z-index:1000}
+    #main-burger{width:56px;height:56px;background:rgba(255,255,255,.92);backdrop-filter:blur(14px);border:1px solid var(--border);border-radius:50%;display:grid;place-items:center;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.12);transition:all .35s}
+    [data-theme="dark"] #main-burger{background:rgba(20,20,25,.96)}
+    #main-burger:hover{transform:scale(1.08)}
+    #main-burger svg{width:28px;height:28px;stroke:var(--text);stroke-width:2.5}
+    .nav-items{position:absolute;top:0;right:56px;height:60px;background:rgba(255,255,255,.95);backdrop-filter:blur(14px);border:1px solid var(--border);border-radius:34px;padding:0 16px;display:flex;align-items:center;gap:12px;box-shadow:0 12px 40px rgba(0,0,0,.2);opacity:0;visibility:hidden;transform:scale(.92);transition:all .35s}
+    [data-theme="dark"] .nav-items{background:rgba(20,20,25,.96)}
+    .nav-items.open{opacity:1;visibility:visible;transform:scale(1)}
+    .nav-items a,.nav-items button{
+      width:50px;height:50px;display:grid;place-items:center;background:none;border:none;color:var(--text);opacity:.7;cursor:pointer;border-radius:50%;transition:opacity .3s;position:relative;overflow:hidden;
+    }
+    .nav-items a::before,.nav-items button::before{
+      content:"";position:absolute;inset:4px;background:rgba(180,159,221,.28);border-radius:50%;transform:scale(0);transition:transform .42s cubic-bezier(.32,0,.07,1);z-index:-1;
+    }
+    [data-theme="dark"] .nav-items a::before,[data-theme="dark"] .nav-items button::before{
+      background:rgba(196,168,255,.35);
+    }
+    .nav-items a:hover::before,.nav-items button:hover::before{transform:scale(1)}
+    .nav-items a:hover,.nav-items button:hover{opacity:1}
+    .nav-items svg{width:26px;height:26px;stroke:currentColor;stroke-width:2.1}
+    #main-theme-toggle .icon-moon{display:none}
+    [data-theme="dark"] #main-theme-toggle .icon-sun{display:none}
+    [data-theme="dark"] #main-theme-toggle .icon-moon{display:block}
+
+    .container{max-width:1100px;margin:0 auto;padding:2rem 1rem;text-align:center}
+    header{margin:4rem 0}
+    header h1{font-size:2.4rem;font-weight:800;margin-bottom:.5rem}
+    header p{font-size:1.1rem;color:#666}
+
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:2rem;margin-top:3rem}
+    .version-card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:16px;
+      overflow:hidden;
+      box-shadow:0 8px 32px rgba(0,0,0,.1);
+      transition:transform .3s,box-shadow .3s,background .3s; /* FIXED: was "background .3s" */
+      cursor:pointer;
+      position:relative;
+    }
+    .version-card::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:var(--hover);
+      opacity:0;
+      border-radius:16px;
+      transition:opacity .3s;
+      pointer-events:none;
+      z-index:-1;
+    }
+    .version-card:hover{
+      transform:translateY(-8px);
+      box-shadow:0 16px 40px rgba(0,0,0,.2);
+    }
+    .version-card:hover::before{opacity:1}
+    .card-header{background:var(--accent);color:white;padding:2.2rem 1rem;text-align:center;font-size:2.4rem;font-weight:800}
+    .card-body{padding:1.8rem;text-align:center}
+    .desc{font-size:1.15rem;color:#555}
+
+    /* MODAL + BLUR */
+    .overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(10px);opacity:0;visibility:hidden;transition:all .4s;z-index:999}
+    .overlay.active{opacity:1;visibility:visible}
+    .modal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.9);background:var(--card);border:1px solid var(--border);border-radius:20px;width:90%;max-width:520px;padding:2rem;box-shadow:0 30px 90px rgba(0,0,0,.5);opacity:0;visibility:hidden;transition:all .4s cubic-bezier(0.16,1,0.3,1);z-index:1000}
+    .modal.active{opacity:1;visibility:visible;transform:translate(-50%,-50%) scale(1)}
+    .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem}
+    .modal-header h2{font-size:2rem;color:var(--accent);font-weight:800}
+    .close-btn{background:none;border:none;font-size:2.6rem;cursor:pointer;color:var(--accent);opacity:.8;transition:.3s;line-height:1}
+    .close-btn:hover{opacity:1;transform:scale(1.1)}
+
+    .modal ul{list-style:none}
+    .modal li{margin:0.9rem 0}
+    .modal a{display:block;padding:1rem 1.5rem;border-radius:12px;font-size:1.1rem;font-weight:500;transition:.25s}
+    .modal a:hover{background:rgba(180,159,221,.25);transform:translateX(8px)}
+
+    footer{text-align:center;padding:4rem 0;color:#888;font-size:0.9rem}
+  </style>
+</head>
+<body>
+
+  <div class="main-nav">
+    <button id="main-burger" aria-label="Open menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="4" y1="6" x2="20" y2="6"></line>
+        <line x1="4" y1="12" x2="20" y2="12"></line>
+        <line x1="4" y1="18" x2="20" y2="18"></line>
+      </svg>
+    </button>
+
+    <div class="nav-items" id="nav-items">
+      <a href="https://sqidgeon.uk">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          <polyline points="9 22 9 12 15 12 15 22"></polyline>
+        </svg>
+      </a>
+      <button id="main-theme-toggle">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="container">
+    <header>
+      <h1>Builder</h1>
+      <p>Click any version to see available loaders.</p>
+    </header>
+
+    <div class="grid">
+      <div class="version-card" data-version="1.7" data-title="1.7 Versions">
+        <div class="card-header">1.7</div>
+        <div class="card-body"><div class="desc">The update that changed the world.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>© 2025 Sqidgeon</p>
+  </footer>
+
+  <div class="overlay" id="overlay"></div>
+  <div class="modal" id="modal">
+    <div class="modal-header">
+      <h2 id="modal-title"></h2>
+      <button class="close-btn" id="close-btn">×</button>
+    </div>
+    <ul id="patch-list"></ul>
+  </div>
+
+  <script>
+    const root = document.documentElement;
+    root.setAttribute("data-theme", localStorage.getItem("theme") || "light");
+
+    document.getElementById("main-theme-toggle")?.addEventListener("click", e => {
+      e.stopPropagation();
+      const newTheme = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+      root.setAttribute("data-theme", newTheme);
+      localStorage.setItem("theme", newTheme);
+    });
+
+    const burger = document.getElementById("main-burger");
+    const navItems = document.getElementById("nav-items");
+    burger.addEventListener("click", e => { e.stopPropagation(); navItems.classList.toggle("open"); });
+    document.addEventListener("click", e => {
+      if (!burger.contains(e.target) && !navItems.contains(e.target)) navItems.classList.remove("open");
+    });
+    navItems.addEventListener("click", e => e.stopPropagation());
+
+    const overlay = document.getElementById("overlay");
+    const modal = document.getElementById("modal");
+    const modalTitle = document.getElementById("modal-title");
+    const patchList = document.getElementById("patch-list");
+    const closeBtn = document.getElementById("close-btn");
+
+    const patches = {
+      "1.21": ["1.21.3.html","1.21.2.html","1.21.1.html","1.21.html"],
+      "1.20": ["1.20.6.html","1.20.5.html","1.20.4.html","1.20.3.html","1.20.2.html","1.20.1.html","1.20.html"],
+      "1.19": ["1.19.4.html","1.19.3.html","1.19.2.html","1.19.1.html","1.19.html"],
+      "1.18": ["1.18.2.html","1.18.1.html","1.18.html"],
+      "1.7": ["1.7.2.html"]
+    };
+
+    document.querySelectorAll(".version-card").forEach(card => {
+      card.addEventListener("click", () => {
+        const ver = card.dataset.version;
+        const title = card.dataset.title;
+        modalTitle.textContent = title;
+        patchList.innerHTML = "";
+        (patches[ver] || []).forEach(file => {
+          const versionName = file.replace(".html", "");
+          const li = document.createElement("li");
+          li.innerHTML = `<a href="${file}">${versionName}</a>`;
+          patchList.appendChild(li);
+        });
+        overlay.classList.add("active");
+        modal.classList.add("active");
+      });
+    });
+
+    function closeModal() {
+      overlay.classList.remove("active");
+      modal.classList.remove("active");
+    }
+    closeBtn.onclick = closeModal;
+    overlay.onclick = closeModal;
+    document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); });
+  </script>
+</body>
+</html>
